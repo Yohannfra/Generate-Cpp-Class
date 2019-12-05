@@ -111,9 +111,10 @@ And to use it
 ```vim
 :Glass path/to/file.hpp
 " OR
-: Uclass path/to/file.hpp
+:Uclass path/to/file.hpp
 ```
 
 It will automatically write it in you buffer
 
 # Licence
+This project is licensed under the terms of the MIT license.
