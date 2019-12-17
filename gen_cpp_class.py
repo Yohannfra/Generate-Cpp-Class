@@ -9,7 +9,10 @@ class GenCppClass:
         len_argv = len(sys.argv)
         if len_argv == 2 or len_argv == 3:
             self.lines = self.get_file_content(sys.argv[1])
-            self.class_name = self.get_class_name()
+            if not self.is_c_file(sys.argv[1]):
+                self.class_name = self.get_class_name()
+            else:
+                self.class_name = None
             self.functions = self.get_functions()
             self.variables = self.get_variables()
             if len_argv == 2:
@@ -19,6 +22,11 @@ class GenCppClass:
         else:
             print(f"Usage: {sys.argv[0]} hpp_file [cpp_file]")
             exit(1)
+
+    def is_c_file(self, fp):
+        if ".h" in fp and ".hpp" not in fp:
+            return True
+        return False
 
     def get_file_content(self, fp):
         if os.path.isfile(fp) == False:
@@ -44,7 +52,7 @@ class GenCppClass:
         functions = []
 
         for l in self.lines:
-            if '(' in l and ')' in l:
+            if '(' in l and ')' in l and "typedef" not in l:
                 functions.append(l.strip()[0:-1])
         return functions
 
@@ -62,19 +70,23 @@ class GenCppClass:
         for f in self.functions:
             l = f.split()
             function_name = ' '.join(l[1:])
-            if len(l) >= 2:
-                print(f"{l[0]} {self.class_name}::{function_name}")
+            if self.class_name != None:
+                if len(l) >= 2:
+                        print(f"{l[0]} {self.class_name}::{function_name}")
+                else:
+                    print(f"{self.class_name}::{l[0]}")
+                print('{')
+                if 'get' in function_name or 'Get' in function_name:
+                    for v in self.variables:
+                        v = v.split()
+                        if v[1] in function_name and v[0] == l[0]:
+                            print(f'    return {v[1]};')
+                else:
+                    print("")
+                print("}\n")
             else:
-                print(f"{self.class_name}::{l[0]}")
-            print('{')
-            if 'get' in function_name or 'Get' in function_name:
-                for v in self.variables:
-                    v = v.split()
-                    if v[1] in function_name and v[0] == l[0]:
-                        print(f'    return {v[1]};')
-            else:
-                print("")
-            print("}\n")
+                print(f"{l[0]} {function_name}")
+                print('{\n\n}\n')
 
     def update_content(self, header_name, cpp_file):
         cpp_fc = self.get_file_content(cpp_file)
